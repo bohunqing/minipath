@@ -1,0 +1,529 @@
+#include <iomanip>
+#include <iostream>
+#include <vector>
+#include<queue>
+using namespace std;
+int visited[100], dist[100], path[100];// 定义辅助数组 最短路径数组 路径名数组
+#define INK 10000;			//设置极大
+void menu()												//菜单
+{
+	cout << "                              A-----教学楼1" << endl;
+	cout << "                              B-----教学楼2" << endl;
+	cout << "                              C-----教学楼3" << endl;
+	cout << "                              D-----教学楼4" << endl;
+	cout << "                              E-----教学楼5" << endl;
+	cout << "                              F-----图书馆" << endl;
+	cout << "                              G-----食堂1" << endl;
+	cout << "                              H-----食堂2" << endl;
+	cout << "                              I-----宿舍楼1" << endl;
+	cout << "                              J-----宿舍楼2" << endl;
+	cout << "                              K-----宿舍楼3" << endl;
+	cout << "                              L-----宿舍楼4" << endl;
+	cout << "                              M-----超市" << endl;
+	cout << "                              N-----篮球场" << endl;
+	cout << "                              O-----操场" << endl;
+	cout << "                              P-----大门" << endl;
+}
+void getBuildingName(char n)  //获取节点信息
+{
+	switch (n)
+	{
+	case 'A':
+		cout << "教学楼1";
+		break;
+	case 'B':
+		cout << "教学楼2";
+		break;
+	case 'C':
+		cout << "教学楼3";
+		break;
+	case 'D':
+		cout << "教学楼4";
+		break;
+	case 'E':
+		cout << "教学楼5";
+		break;
+	case 'F':
+		cout << "图书馆";
+		break;
+	case 'G':
+		cout << "食堂1";
+		break;
+	case 'H':
+		cout << "食堂2";
+		break;
+	case 'I':
+		cout << "宿舍楼1";
+		break;
+	case 'J':
+		cout << "宿舍楼2";
+		break;
+	case 'K':
+		cout << "宿舍楼3";
+		break;
+	case 'L':
+		cout << "宿舍楼4";
+		break;
+	case 'M':
+		cout << "超市";
+		break;
+	case 'N':
+		cout << "篮球场";
+		break;
+	case 'O':
+		cout << "操场";
+		break;
+	case 'P':
+		cout << "大门";
+		break;
+	}
+}
+struct ENode {   //节点定义
+	int ivex;    //节点指向点
+	int weight;   //路径权值
+	char pathname;   //路径名称
+	ENode*nextEdge;  
+}; 
+struct VNode {
+	char data;  //节点信息
+	ENode *firstEdge;  //表头
+};
+struct PATH {   //辅助路径记录数组
+	int prior;  //路径前驱节点
+	char pathname;   //路径名称
+}ppath[100];  
+class EData   //节点类定义
+{
+public:
+	char start;   //起始点
+	char end;     //终点
+	int weight;   //两点间权值
+	char pathname;  //路径名称
+public:
+	EData(char s, char e, int w, int p) :start(s), end(e), weight(w), pathname(p) {}//构造函数
+};
+class ListUDG  //图类
+{
+#define MAX 100   //最大节点数
+#define INF 10000  //极大值
+private:
+	int mVexNum;  //节点数目
+	int mEdgNum;  //边数目
+	VNode mVexs[MAX];  //图的储存结构
+
+public:
+	ListUDG();  //无参构造函数
+	ListUDG(char vexs[], int vlen, EData *edges[], int elen);  //代参构造函数
+	~ListUDG(); //析构函数
+	void BFS(); //广搜
+	void print(); //输出图
+	void minpath(); //最短路径算法
+	int getmVexNum(); //获取节点数目
+	char getVertex(int n); //获取节点名称
+	int find(int n);//查找相邻节点
+private:
+	char readChar(); //无参构造时节点名称输入
+	int getPosition(char ch);  //获取节点下标
+	void DFS(int i, int *visited); //深搜遍历
+	void linkLast(ENode *list, ENode *node); //节点接在邻接表表尾
+	int getWeight(int start, int end); //获取权值
+};
+int ListUDG::find(int n) //查找相邻节点
+{
+	int f;
+	for (ENode*w = mVexs[n].firstEdge; w != NULL; w = w->nextEdge)//从相应表头遍历邻接表
+	{
+		f = w->ivex;
+	}
+	return f; //返回节点
+}
+void ListUDG::minpath() //获取最短路径
+{
+	cout << "输入终点和起点";
+	char s, e; 
+	cin >> s >> e;
+	int cs = getPosition(s); //获取起始点下标
+	int ce = getPosition(e); //获取终点下标
+	dist[cs] = 0; //起始点最短距离为0
+	ppath[cs].prior = -2; //起始点无前驱节点
+	for (int i = 0; i < mVexNum; i++) //将起始点不相邻节点间距离设为极大
+	{
+		if (i == cs)
+			continue;
+		dist[i] = INK;
+	}
+	for (ENode*w = mVexs[cs].firstEdge; w != NULL; w = w->nextEdge) //最短路径数组更新权值为邻接点与起点权值
+		dist[w->ivex] = w->weight;
+	for (int i = 0; i < mVexNum; i++) //设置前驱节点
+	{
+		if (i == cs)
+			continue;
+		if (dist[i] < 1000)
+		{
+			char c2;
+			for (ENode*w = mVexs[cs].firstEdge; w != NULL; w = w->nextEdge) //将最短路径名称存入辅助路径记录数组
+			{
+				if (w->ivex == i)
+				{
+					c2 = w->pathname;
+					break;
+				}
+			}
+			ppath[i].prior = cs; //记录前驱节点
+			ppath[i].pathname = c2; //记录路径名称
+		}
+		else
+		{
+			path[i] = -1; //非邻接节点没有前驱
+		}
+	}
+	path[cs] = -2; 
+	for (int i = 0; i < 100; i++)
+		visited[i] = 0; //辅助数组置0
+	bool t1 = true;
+	while (1) 
+	{
+		if (t1 == false)
+			break;
+		int t = INK;
+		int j = -1;
+		for (int i = 0; i < mVexNum; i++) //找到与前驱节点最近的相邻节点
+		{
+			if (visited[i] == 0 && dist[i] < t)
+			{
+				t = dist[i];     //距离更新为最短路径
+				j = i;   //标记节点
+			}
+		}
+		if (j == ce) //到达目的节点
+			t1 = false;  //结束循环
+		visited[j] = 1;  //辅助数组标记已经遍历
+		for (ENode*w = mVexs[j].firstEdge; w != NULL; w = w->nextEdge)  //将相邻最短节点设为新的起始点
+		{
+
+			int p = w->ivex;
+			if (dist[p] > dist[j] + w->weight)  //更新最短路径
+			{
+				char c2;
+				for (ENode*w1 = mVexs[j].firstEdge; w1 != NULL; w1 = w1->nextEdge)  //更新路径名称和前驱节点
+				{
+					if (w1->ivex == p)
+					{
+						c2 = w1->pathname;  
+						break;
+					}
+				}
+				dist[p] = dist[j] + w->weight;  //更新新的最短路径
+				ppath[p].prior = j;  //更新前驱节点
+				ppath[p].pathname = c2; //记录最短路径名称
+			}
+		}
+	}
+
+	cout << endl;
+	int k = ce; 
+	while (1)
+	{
+		if (k == cs)
+		{
+			break;
+		}
+		int c = ppath[k].prior;
+		for (ENode *w = mVexs[k].firstEdge; w != NULL; w = w->nextEdge)  //查找两个节点之间的路径名字
+		{
+			if (w->ivex == c&&w->pathname!=NULL)   //
+			{
+				cout <<"路"<< w->pathname << " ";   //输出路径名字
+				break;
+			}
+		}
+		cout << "->";
+		k = ppath[k].prior;
+	}
+	cout << endl;
+	k = ce;
+	while (1)
+	{
+		if (k == cs)
+		{
+			getBuildingName(getVertex(k));   //输出移动路线
+			break;
+		}
+		getBuildingName(getVertex(k));
+		cout << "->";
+		k = ppath[k].prior;
+	}
+	cout << endl;
+	cout << "路线总长" << dist[ce]; //输出最短路径总长
+	cout << endl;
+	
+}
+char ListUDG::getVertex(int n)  //获取返回节点名称
+{
+	return mVexs[n].data;
+}
+int ListUDG::getmVexNum()  //获取节点数量
+{
+	return mVexNum;
+}
+ListUDG::ListUDG()  //无参构造
+{
+	char c1, c2;
+	int i, p1, p2;
+	int weight;
+	ENode *node1, *node2;  //创建节点指针
+	cout << "输入顶点数: ";
+	cin >> mVexNum;
+	cout << "输入边数: ";
+	cin >> mEdgNum;
+	if (mVexNum < 1 || mEdgNum < 1 || (mEdgNum > (mVexNum * (mVexNum - 1)))) //输入格式错误跳出
+	{
+		cout << "输入格式错误" << endl;
+		return;
+	}
+	for (i = 0; i < mVexNum; i++)  //创建邻接表表头
+	{
+		cout << "vertex(" << i << "): ";
+		mVexs[i].data = readChar();
+		mVexs[i].firstEdge = NULL;
+	}
+
+	for (i = 0; i < mEdgNum; i++)  //创建邻接表
+	{
+		cout << "edge(" << i << "): ";
+		c1 = readChar();  //获取相邻点信息
+		c2 = readChar();
+		cin >> weight;  //获取权值
+
+		p1 = getPosition(c1);   //返回下标
+		p2 = getPosition(c2);
+		node1 = new ENode();   //创建新节点
+		node1->ivex = p2;   //连接到起始节点
+		node1->weight = weight;
+		if (mVexs[p1].firstEdge == NULL)  
+			mVexs[p1].firstEdge = node1;  //该节点作为表头
+		else
+			linkLast(mVexs[p1].firstEdge, node1);  //接到表头后方
+		node2 = new ENode();  
+		node2->ivex = p1;
+		node2->weight = weight;
+		if (mVexs[p2].firstEdge == NULL)
+			mVexs[p2].firstEdge = node2;
+		else
+			linkLast(mVexs[p2].firstEdge, node2);
+	}
+}
+ListUDG::ListUDG(char vexs[], int vlen, EData *edges[], int elen)  //有参构造
+{
+	char c1, c2, pname;
+	int i, p1, p2;
+	int weight;
+	ENode *node1, *node2;  //创建结点指针
+	mVexNum = vlen;   //节点数目
+	mEdgNum = elen;   //边总数
+	for (i = 0; i < mVexNum; i++)//输入节点数据
+	{
+		mVexs[i].data = vexs[i];
+		mVexs[i].firstEdge = NULL;
+	}
+
+	for (i = 0; i < mEdgNum; i++)  //创建邻接表
+	{
+		c1 = edges[i]->start;  //获取传入节点数组的起点终点数据
+		c2 = edges[i]->end;
+		weight = edges[i]->weight; //获取权值
+		pname = edges[i]->pathname; //获取路径名称
+		p1 = getPosition(c1); //返回下标
+		p2 = getPosition(c2);
+		node1 = new ENode(); 
+		node1->ivex = p2;  
+		node1->weight = weight;
+		node1->pathname = pname;
+		if (mVexs[p1].firstEdge == NULL)
+			mVexs[p1].firstEdge = node1; //该节点作为表头
+		else
+			linkLast(mVexs[p1].firstEdge, node1);  //该节点连接到表尾
+		node2 = new ENode();
+		node2->ivex = p1;
+		node2->weight = weight;
+		if (mVexs[p2].firstEdge == NULL)
+			mVexs[p2].firstEdge = node2;
+		else
+			linkLast(mVexs[p2].firstEdge, node2);
+	}
+}
+ListUDG::~ListUDG()
+{
+}
+void ListUDG::linkLast(ENode *list, ENode *node) //节点接到表尾
+{
+	ENode *p = list; //创建节点
+	while (p->nextEdge)  //遍历到表尾
+		p = p->nextEdge;   //接上节点
+	p->nextEdge = node;
+}
+int ListUDG::getPosition(char ch) //获取下标
+{
+	int i;
+	for (i = 0; i < mVexNum; i++)
+		if (mVexs[i].data == ch)
+			return i;
+	return -1;
+}
+char ListUDG::readChar() //输入节点名称
+{
+	char ch;
+
+	do {
+		cin >> ch;
+	} while (!((ch >= 'a'&&ch <= 'z') || (ch >= 'A'&&ch <= 'Z')));  //确保不超出范围
+
+	return ch;
+}
+void ListUDG::BFS() //广搜遍历
+{
+	int head = 0;
+	int rear = 0;
+	queue<int>q;  //辅助队列
+	int visited[MAX];
+	int i, j, k;
+	ENode *node;
+	for (i = 0; i < mVexNum; i++)
+		visited[i] = 0;  //辅助数组置0
+	cout << "BFS: ";
+	for (i = 0; i < mVexNum; i++)
+	{
+		if (!visited[i])
+		{
+			visited[i] = 1;
+			//cout << mVexs[i].data << " ";
+			q.push(i);  //输出节点数据，节点入队
+		}
+		while (!q.empty())//队不为空
+		{
+			j = q.front();  //指向队头
+			q.pop();  //队头出队
+			node = mVexs[j].firstEdge;  //指向队头下标的邻接节点
+			while (node != NULL)
+			{
+				k = node->ivex;
+				if (!visited[k])
+				{
+					visited[k] = 1; //辅助数组置1
+					//cout << mVexs[k].data << " ";   //输出节点信息
+					q.push(k); //与队头邻接节点入队
+				}
+				node = node->nextEdge; //指针后移
+			}
+		}
+	}
+	cout << endl;
+	bool t = true;
+	for (int i = 0; i < 16; i++)
+	{
+		if (visited[i] == 0)
+		{
+			t = false;
+			break;
+		}
+	}
+	if (!t)
+	{
+		cout << "地图某些地点没有道路可以到达";
+	}
+	else
+	{
+		cout << "地图所有地点都有道路可以连通";
+	}
+	cout << endl;
+}
+void ListUDG::print() //图信息输出
+{
+	int i;
+	ENode *node;
+	cout << "图信息:" << endl;
+	for (i = 0; i < mVexNum; i++)
+	{
+		cout << i << "(" << mVexs[i].data << "): ";
+		node = mVexs[i].firstEdge;
+		while (node != NULL)
+		{
+			cout << node->ivex << "(" << mVexs[node->ivex].data << ") "; //输出每对路径相接节点信息
+			node = node->nextEdge;
+		}
+		cout << endl;
+	}
+}
+int ListUDG::getWeight(int start, int end)  //获取权值
+{
+	ENode *node;
+
+	if (start == end)
+		return 0;
+
+	node = mVexs[start].firstEdge;  //查找所求路径
+	while (node != NULL)
+	{
+		if (end == node->ivex)
+			return node->weight;  //返回查找点之间权值
+		node = node->nextEdge;
+	}
+
+	return INF;  //不相邻返回为极大
+}
+int main()
+{
+	menu();
+	char vexs[] = { 'A', 'B', 'C', 'D', 'E', 'F','G','H','I','J','K','L','M','N','O','P' }; //节点数目
+	EData *edges[] = {                                                                                  //图的信息录入
+	new EData('A', 'B', 40,'f'),	new EData('B', 'A', 40,'f'),
+	new EData('A', 'F', 140,'g'),	new EData('F', 'A', 140,'g'),	
+	new EData('A', 'C', 200,'e'),	new EData('C', 'A', 200,'e'),
+	new EData('B', 'M', 360,'o'),	new EData('M', 'B', 360,'o'),
+	new EData('B', 'P', 150,'b'),	new EData('P', 'B', 150,'b'),
+	new EData('B', 'E', 200,'c'),	new EData('E', 'B', 200,'c'),
+	new EData('E', 'P', 100,'a'),	new EData('P', 'E', 150,'a'),
+	new EData('E', 'D', 30,'d'),	new EData('D', 'E', 30,'d'),
+	new EData('D', 'C', 30,'i'),	new EData('C', 'D', 30,'i'),
+	new EData('C', 'F', 140,'h'),	new EData('F', 'C', 140,'h'),
+	new EData('F', 'N', 780,'j'),	new EData('N', 'F', 780,'j'),
+	new EData('N', 'O', 450,'k'),	new EData('O', 'N', 450,'k'),
+	new EData('O', 'I', 460,'m'),	new EData('I', 'O', 460,'m'),
+	new EData('I', 'J', 15,'z'),	new EData('J', 'I', 15,'z'),
+	new EData('I', 'K', 40,'y'),	new EData('K', 'I', 40,'y'),
+	new EData('J', 'K', 30,'x'),	new EData('K', 'J', 30,'x'),
+	new EData('K', 'L', 15,'w'),	new EData('L', 'K', 15,'w'),
+	new EData('J', 'L', 40,'v'),	new EData('J', 'L', 40,'v'),
+	new EData('G', 'J', 175,'s'),	new EData('J', 'G', 175,'s'),
+	new EData('A', 'G', 300,'n'),	new EData('G', 'A', 300,'n'),	
+	new EData('G', 'H', 50,'r'),	new EData('H', 'G', 50,'r'),
+	new EData('G', 'L', 160,'t'),	new EData('L', 'G', 160,'t'),
+	new EData('H', 'L', 150,'u'),	new EData('L', 'H', 150,'u'),
+	new EData('G', 'M', 30,'p'),	new EData('M', 'G', 30,'p'),
+	new EData('H', 'M', 30,'q'),	new EData('M', 'H', 30,'q'),
+	new EData('O', 'A', 370,'l'),	new EData('A', 'O', 370,'l')
+	};
+	int vlen = sizeof(vexs) / sizeof(vexs[0]); //获取图顶点数目
+	int elen = sizeof(edges) / sizeof(edges[0]); //获取图边数目
+	ListUDG* pG; //创建图类
+	pG = new ListUDG(vexs, vlen, edges, elen);  //有参构造图
+	pG->BFS();
+	cout << endl;
+	bool t = true;
+	while (1)
+	{
+		cout << "输入1查询路径,0退出" << endl;
+		int n;
+		cin >> n;	
+		switch (n) {
+		case 1:pG->minpath();
+			break;
+		case 0:t = false;
+			break;
+		}
+		if (!t)
+			break;
+	}
+	system("pause");
+	return 0;
+}
